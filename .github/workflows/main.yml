@@ -27,5 +27,5 @@ jobs:
       run: | 
         docker version
         # 使用Dockerfile构建镜像
-        docker build . --file api/Dockerfile --tag gotest:${{ github.sha }}
+        docker build . --file Dockerfile --tag gotest:${{ github.sha }}
     # 部署到服务器
