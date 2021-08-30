@@ -1,6 +1,7 @@
 FROM golang:alpine
 # docker中的工作目录
 WORKDIR $GOPATH/one
+RUN go mod init
 RUN go mod tidy
 # 将当前目录同步到docker工作目录下，也可以只配置需要的目录和文件（配置目录、编译后的程序等）
 ADD . ./
