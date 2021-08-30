@@ -1,35 +1,13 @@
-FROM golang:1.16.5
-
-# 为我们的镜像设置必要的环境变量
-ENV GO111MODULE=on \
-    CGO_ENABLED=0 \
-    GOOS=linux \
-    GOARCH=amd64 \
-    GOPROXY="https://goproxy.cn,direct"
-
-# 移动到工作目录：/opt/src/golang/one 这个目录 是你项目代码 放在linux上
-# 这是我的代码跟目录
-# 你们得修改成自己的
-WORKDIR /opt/src/golang/one
-
-# 将代码复制到容器中
-COPY . .
-
-# 将我们的代码编译成二进制可执行文件  可执行文件名为 app
+FROM golang:alpine
+# docker中的工作目录
+WORKDIR $GOPATH/one
+# 将当前目录同步到docker工作目录下，也可以只配置需要的目录和文件（配置目录、编译后的程序等）
+ADD . ./
+# 由于所周知的原因，某些包会出现下载超时。这里在docker里也使用go module的代理服务
+ENV GO111MODULE=on
+ENV GOPROXY="https://goproxy.io"
+# 指定编译完成后的文件名，可以不设置使用默认的，最后一步要执行该文件名
 RUN go build -o app .
-
-# 移动到用于存放生成的二进制文件的 /dist 目录
-WORKDIR /dist
-
-# 将二进制文件从 /opt/src/golang/one 目录复制到这里
-RUN cp /opt/src/golang/one/app .
-# 在容器目录 /dist 创建一个目录 为src
-RUN mkdir -p src .
-# 在容器目录 把宿主机的静态资源文件 拷贝到 容器/dist/src目录下
-# 这个步骤可以略  因为项目是引用到了 外部静态资源
-RUN cp -r /opt/src/golang/one/src/static ./src/
-# 声明服务端口
 EXPOSE 8081
-
-# 启动容器时运行的命令
-CMD ["/dist/app"]
+# 这里跟编译完的文件名一致
+ENTRYPOINT  ["./app"]
