@@ -32,7 +32,9 @@ jobs:
           echo $DIR
           echo "上面的是打印的文件：" $DIR
         done
-        
+  publish:
+    runs-on: ubuntu-latest
+    steps:    
     # 部署到服务器
     - name: Deploy
       uses: appleboy/ssh-action@master
