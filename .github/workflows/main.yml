@@ -34,3 +34,19 @@ jobs:
         done
         
     # 部署到服务器
+    - name: Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: ${{ secrets.PORT }}
+        script: |
+          docker login --username=${{ secrets.DOCKER_USERNAME }} --password=${{ secrets.DOCKER_PASSWORD }} ${{ secrets.DOCKER_REGISTRY }}
+          # kubectl set image Deployment api-deployment api=${{ secrets.DOCKER_REGISTRY }}/jiyuwu/api:${{ github.sha }}
+      run: |
+        docker version
+        for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
+          echo $DIR
+          echo "上面的是打印的文件：" $DIR
+        done
