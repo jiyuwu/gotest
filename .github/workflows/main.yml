@@ -36,11 +36,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
-        port: ${{ secrets.PORT }}
+      # with:
+      #   host: ${{ secrets.HOST }}
+      #   username: ${{ secrets.USERNAME }}
+      #   password: ${{ secrets.PASSWORD }}
+      #   port: ${{ secrets.PORT }}
     - name: Deploy the Docker image
     - run: |
         for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
