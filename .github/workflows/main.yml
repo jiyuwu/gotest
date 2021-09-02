@@ -41,7 +41,11 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
-    - run: echo "This job will run after test_ab is complete"
+    - run: |
+        for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
+          echo $DIR
+          echo "上面的是打印的文件：" $DIR
+        done
     # # 部署到服务器
     # - name: Deploy
     #   uses: appleboy/ssh-action@master
