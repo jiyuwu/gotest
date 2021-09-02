@@ -41,7 +41,7 @@ jobs:
       #   username: ${{ secrets.USERNAME }}
       #   password: ${{ secrets.PASSWORD }}
       #   port: ${{ secrets.PORT }}
-    - name: Deploy the Docker image
+    # - name: Deploy the Docker image
     - run: |
         for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
           echo $DIR
