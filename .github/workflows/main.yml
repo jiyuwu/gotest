@@ -27,9 +27,9 @@ jobs:
       run: | 
         docker version
         # 使用Dockerfile构建镜像
-        for:
-          DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
-            docker build . --file Dockerfile --tag $DIR:${{ github.sha }}
+        # docker build . --file Dockerfile --tag Gotest:${{ github.sha }}
+        for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
+          echo $DIR
         done
         
     # 部署到服务器
