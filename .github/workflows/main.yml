@@ -41,10 +41,10 @@ jobs:
         username: ${{ secrets.USERNAME }}
         password: ${{ secrets.PASSWORD }}
         port: ${{ secrets.PORT }}
-    - run: |
-        for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
-          echo $DIR
-          echo "上面的是打印的文件：" $DIR
-        done
+        script: |
+          for DIR in $(find -maxdepth 2 -name Dockerfile | cut -d'/' -f2); do
+            echo $DIR
+            echo "上面的是打印的文件：" $DIR
+          done
         
       
