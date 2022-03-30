@@ -23,5 +23,5 @@ func main() {
 	})
 	// 初始化数据库
 	dao.InitDatabaseConn()
-	r.Run(":8080")
+	r.Run(":9962")
 }

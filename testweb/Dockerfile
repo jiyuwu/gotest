@@ -13,6 +13,6 @@ ENV GO111MODULE=on \
 RUN cd testweb && go build -o app .
 FROM alpine:latest
 COPY --from=0 /docker/testweb .
-EXPOSE 80
+EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app"]
