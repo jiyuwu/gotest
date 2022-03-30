@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/jiyuwu/gotest/testweb/controllers"
+	"github.com/jiyuwu/gotest/testweb/dao"
 	"github.com/jiyuwu/gotest/testweb/middleware"
 )
 
@@ -13,11 +14,14 @@ func main() {
 	//websocket测试
 	r := gin.Default()
 	r.Use(middleware.Cors())
+	middleware.Router(r)
 	r.GET("/ws", controllers.WsHandler)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
-	r.Run(":80")
+	// 初始化数据库
+	dao.InitDatabaseConn()
+	r.Run(":8080")
 }
