@@ -9,6 +9,8 @@ ENV GO111MODULE=on
 ENV GOPROXY="https://goproxy.io"
 # 指定编译完成后的文件名，可以不设置使用默认的，最后一步要执行该文件名
 RUN go build -o app .
+FROM alpine:latest
+COPY --from=0 /docker/app .
 EXPOSE 8081
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app"]
