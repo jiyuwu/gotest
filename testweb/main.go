@@ -11,6 +11,9 @@ func main() {
 	gin.SetMode(gin.ReleaseMode) //线上环境
 
 	go controllers.Manager.Start()
+
+	//健康检查  1.没有token的直接失效 2.没有超时的失效
+
 	//websocket测试
 	r := gin.Default()
 	r.Use(middleware.Cors())

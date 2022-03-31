@@ -3,7 +3,7 @@ package entity
 import "time"
 
 type ModelPrefix struct {
-	ID int64 `json:"id" gorm:"column:Id;primaryKey"`
+	Id int64 `json:"id" gorm:"column:Id;primaryKey"`
 }
 
 // ModelSuffix 如果只需要创建与修改时间，则用这个

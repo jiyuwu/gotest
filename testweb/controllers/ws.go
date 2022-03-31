@@ -131,6 +131,8 @@ func WsHandler(c *gin.Context) {
 		Send:   make(chan []byte),
 	}
 	Manager.Register <- client
+
 	go client.Read()
+
 	go client.Write()
 }

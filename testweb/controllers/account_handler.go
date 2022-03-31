@@ -21,15 +21,26 @@ func (ah *AccountHandler) Init(server *gin.Engine) {
 func (ah *AccountHandler) login(c *gin.Context) {
 	// 第一步，验证参数
 	req := new(vo.LoginReq)
+	result := new(vo.LoginResponse)
 	err := c.ShouldBindJSON(req)
 	if err != nil {
-		log.Info("LoginReq req:%+v err:%s", req, err)
+		result.Code = 0
+		result.Msg = "login req error"
+		c.JSON(http.StatusOK, result)
+		log.Info("login req:%+v err:%s", req, err)
 		return
 	}
 	var accDao dao.AccountDAO
 	t, err := accDao.GetAccount(req.UserName, common.MD5(req.Password))
+	// 第二步登录成功后生成token并更新
 	if err != nil {
+		result.Code = 2
+		result.Msg = "login failure"
+		c.JSON(http.StatusOK, result)
 		return
 	}
-	c.JSON(http.StatusOK, t)
+	result.Token = t.Token
+	result.Code = 1
+	result.Msg = "success"
+	c.JSON(http.StatusOK, result)
 }
