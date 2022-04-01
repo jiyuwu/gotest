@@ -19,9 +19,14 @@ type ClientManager struct {
 
 // Client is a websocket client
 type Client struct {
-	ID     string
-	Socket *websocket.Conn
-	Send   chan []byte
+	Addr          string // 客户端地址
+	Token         string // 用户token，用户登录以后才有
+	LoginTime     uint64 // 登录时间 登录以后才有
+	FirstTime     uint64 // 首次连接时间
+	HeartbeatTime uint64 // 用户上次心跳时间
+	AppId         uint32 // 登录的平台Id app/web/ios
+	Socket        *websocket.Conn
+	Send          chan []byte // 待发送的数据
 }
 
 // Message is return msg
@@ -45,17 +50,17 @@ func (manager *ClientManager) Start() {
 		log.Println("<---管道通信--->")
 		select {
 		case conn := <-Manager.Register:
-			log.Printf("新用户加入:%v", conn.ID)
-			Manager.Clients[conn.ID] = conn
+			log.Printf("新用户加入:%v", conn.Token)
+			Manager.Clients[conn.Token] = conn
 			jsonMessage, _ := json.Marshal(&Message{Content: "Successful connection to socket service"})
 			conn.Send <- jsonMessage
 		case conn := <-Manager.Unregister:
-			log.Printf("用户离开:%v", conn.ID)
-			if _, ok := Manager.Clients[conn.ID]; ok {
+			log.Printf("用户离开:%v", conn.Token)
+			if _, ok := Manager.Clients[conn.Token]; ok {
 				jsonMessage, _ := json.Marshal(&Message{Content: "A socket has disconnected"})
 				conn.Send <- jsonMessage
 				close(conn.Send)
-				delete(Manager.Clients, conn.ID)
+				delete(Manager.Clients, conn.Token)
 			}
 		case message := <-Manager.Broadcast:
 			MessageStruct := Message{}
@@ -68,7 +73,7 @@ func (manager *ClientManager) Start() {
 				case conn.Send <- message:
 				default:
 					close(conn.Send)
-					delete(Manager.Clients, conn.ID)
+					delete(Manager.Clients, conn.Token)
 				}
 			}
 		}
@@ -115,10 +120,7 @@ func (c *Client) Write() {
 	}
 }
 
-//TestHandler socket 连接 中间件 作用:升级协议,用户验证,自定义信息等
 func WsHandler(c *gin.Context) {
-	uid := c.Query("uid")
-	touid := c.Query("to_uid")
 	conn, err := (&websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}).Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
 		http.NotFound(c.Writer, c.Request)
@@ -126,7 +128,7 @@ func WsHandler(c *gin.Context) {
 	}
 	//可以添加用户信息验证
 	client := &Client{
-		ID:     creatId(uid, touid),
+		//Id:     creatId(uid, touid),
 		Socket: conn,
 		Send:   make(chan []byte),
 	}
