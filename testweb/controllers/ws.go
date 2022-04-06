@@ -4,18 +4,24 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/jiyuwu/gotest/testweb/vo"
 )
 
-// ClientManager is a websocket manager
-type ClientManager struct {
-	Clients    map[string]*Client
-	Broadcast  chan []byte
-	Register   chan *Client
-	Unregister chan *Client
-}
+const (
+	defaultAppId = 101 // 默认平台Id
+)
+
+var (
+	clientManager = NewClientManager()                    // 管理者
+	appIds        = []uint32{defaultAppId, 102, 103, 104} // 全部的平台
+
+	serverIp   string
+	serverPort string
+)
 
 // Client is a websocket client
 type Client struct {
@@ -29,62 +35,80 @@ type Client struct {
 	Send          chan []byte // 待发送的数据
 }
 
-// Message is return msg
-type Message struct {
-	Sender    string `json:"sender,omitempty"`
-	Recipient string `json:"recipient,omitempty"`
-	Content   string `json:"content,omitempty"`
+// 初始化
+func NewClient(addr string, socket *websocket.Conn, firstTime uint64) (client *Client) {
+	client = &Client{
+		Addr:          addr,
+		Socket:        socket,
+		Send:          make(chan []byte, 100),
+		FirstTime:     firstTime,
+		HeartbeatTime: firstTime,
+	}
+
+	return
 }
 
-// Manager define a ws server manager
-var Manager = ClientManager{
-	Broadcast:  make(chan []byte),
-	Register:   make(chan *Client),
-	Unregister: make(chan *Client),
-	Clients:    make(map[string]*Client),
+// 连接管理
+type ClientManager struct {
+	Clients     map[*Client]bool   // 全部的连接
+	ClientsLock sync.RWMutex       // 读写锁
+	Users       map[string]*Client // 登录的用户 // appId+uuid
+	UserLock    sync.RWMutex       // 读写锁
+	Register    chan *Client       // 连接连接处理
+	Token       chan *string       // 用户登录处理
+	Unregister  chan *Client       // 断开连接处理程序
+	Broadcast   chan []byte        // 广播 向全部成员发送数据
+}
+
+func NewClientManager() (clientManager *ClientManager) {
+	clientManager = &ClientManager{
+		Clients:    make(map[*Client]bool),
+		Users:      make(map[string]*Client),
+		Register:   make(chan *Client, 1000),
+		Token:      make(chan *string, 1000),
+		Unregister: make(chan *Client, 1000),
+		Broadcast:  make(chan []byte, 1000),
+	}
+
+	return
+}
+
+// 添加客户端
+func (manager *ClientManager) AddClients(client *Client) {
+	manager.ClientsLock.Lock()
+	defer manager.ClientsLock.Unlock()
+
+	manager.Clients[client] = true
+}
+
+// 删除客户端
+func (manager *ClientManager) DelClients(client *Client) {
+	manager.ClientsLock.Lock()
+	defer manager.ClientsLock.Unlock()
+
+	if _, ok := manager.Clients[client]; ok {
+		delete(manager.Clients, client)
+	}
 }
 
 // Start is  项目运行前, 协程开启start -> go Manager.Start()
-func (manager *ClientManager) Start() {
+func Start() {
 	for {
 		log.Println("<---管道通信--->")
 		select {
-		case conn := <-Manager.Register:
+		case conn := <-clientManager.Register:
 			log.Printf("新用户加入:%v", conn.Token)
-			Manager.Clients[conn.Token] = conn
-			jsonMessage, _ := json.Marshal(&Message{Content: "Successful connection to socket service"})
+			clientManager.AddClients(conn)
+
+			jsonMessage, _ := json.Marshal(vo.NewResponseHead("", "", 123, "", "新用户加入"))
 			conn.Send <- jsonMessage
-		case conn := <-Manager.Unregister:
-			log.Printf("用户离开:%v", conn.Token)
-			if _, ok := Manager.Clients[conn.Token]; ok {
-				jsonMessage, _ := json.Marshal(&Message{Content: "A socket has disconnected"})
-				conn.Send <- jsonMessage
-				close(conn.Send)
-				delete(Manager.Clients, conn.Token)
-			}
-		case message := <-Manager.Broadcast:
-			MessageStruct := Message{}
-			json.Unmarshal(message, &MessageStruct)
-			for id, conn := range Manager.Clients {
-				if id != creatId(MessageStruct.Recipient, MessageStruct.Sender) {
-					continue
-				}
-				select {
-				case conn.Send <- message:
-				default:
-					close(conn.Send)
-					delete(Manager.Clients, conn.Token)
-				}
-			}
 		}
 	}
 }
-func creatId(uid, touid string) string {
-	return uid + "_" + touid
-}
+
 func (c *Client) Read() {
 	defer func() {
-		Manager.Unregister <- c
+		clientManager.Unregister <- c
 		c.Socket.Close()
 	}()
 
@@ -92,12 +116,12 @@ func (c *Client) Read() {
 		c.Socket.PongHandler()
 		_, message, err := c.Socket.ReadMessage()
 		if err != nil {
-			Manager.Unregister <- c
+			clientManager.Unregister <- c
 			c.Socket.Close()
 			break
 		}
 		log.Printf("读取到客户端的信息:%s", string(message))
-		Manager.Broadcast <- message
+		clientManager.Broadcast <- message
 	}
 }
 
@@ -126,13 +150,12 @@ func WsHandler(c *gin.Context) {
 		http.NotFound(c.Writer, c.Request)
 		return
 	}
-	//可以添加用户信息验证
-	client := &Client{
-		//Id:     creatId(uid, touid),
+
+	client := &Client{ //连接信息
 		Socket: conn,
 		Send:   make(chan []byte),
 	}
-	Manager.Register <- client
+	clientManager.Register <- client
 
 	go client.Read()
 
