@@ -14,10 +14,11 @@ func main() {
 
 	//健康检查  1.没有token的直接失效 2.没有超时的失效
 
-	//websocket测试
 	r := gin.Default()
+	middleware.Router(r)       //普通接口
+	middleware.WebsocketInit() // websocket接口
 	r.Use(middleware.Cors())
-	middleware.Router(r)
+
 	r.GET("/ws", controllers.WsHandler)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

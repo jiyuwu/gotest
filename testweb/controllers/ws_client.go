@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
+	"runtime/debug"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -13,6 +15,8 @@ import (
 
 const (
 	defaultAppId = 101 // 默认平台Id
+	// 用户连接超时时间
+	heartbeatExpirationTime = 6 * 60
 )
 
 var (
@@ -91,6 +95,48 @@ func (manager *ClientManager) DelClients(client *Client) {
 	}
 }
 
+// 读取客户端数据
+func (c *Client) SendMsg(msg []byte) {
+
+	if c == nil {
+
+		return
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Println("SendMsg stop:", r, string(debug.Stack()))
+		}
+	}()
+
+	c.Send <- msg
+}
+
+// 用户登录
+func (c *Client) Login(appId uint32, userId string, loginTime uint64) {
+	c.AppId = appId
+	c.Token = userId
+	c.LoginTime = loginTime
+	// 登录成功=心跳一次
+	c.Heartbeat(loginTime)
+}
+
+// 用户心跳
+func (c *Client) Heartbeat(currentTime uint64) {
+	c.HeartbeatTime = currentTime
+
+	return
+}
+
+// 心跳超时
+func (c *Client) IsHeartbeatTimeout(currentTime uint64) (timeout bool) {
+	if c.HeartbeatTime+heartbeatExpirationTime <= currentTime {
+		timeout = true
+	}
+
+	return
+}
+
 // Start is  项目运行前, 协程开启start -> go Manager.Start()
 func Start() {
 	for {
@@ -121,7 +167,8 @@ func (c *Client) Read() {
 			break
 		}
 		log.Printf("读取到客户端的信息:%s", string(message))
-		clientManager.Broadcast <- message
+		//clientManager.Broadcast <- message
+		ProcessData(c, message)
 	}
 }
 
