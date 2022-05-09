@@ -40,6 +40,7 @@ func (ah *AccountHandler) login(c *gin.Context) {
 		return
 	}
 	result.Token = t.Token
+	result.Id = t.Id
 	result.Code = 1
 	result.Msg = "success"
 	c.JSON(http.StatusOK, result)

@@ -8,4 +8,5 @@ type LoginReq struct {
 type LoginResponse struct {
 	ModelPrefix
 	Token string `json:"token,omitempty"`
+	Id    int64  `json:"userId,omitempty"`
 }
