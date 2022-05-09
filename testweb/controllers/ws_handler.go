@@ -34,7 +34,7 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 		return
 	}
 
-	fmt.Println("webSocket_request 用户登录", seq, "ServiceToken", request.ServiceToken)
+	fmt.Println("webSocket_request 用户登录", seq, "Token", request.Token)
 
 	// TODO::进行用户权限认证，一般是客户端传入TOKEN，然后检验TOKEN是否合法，通过TOKEN解析出来用户ID
 	if request.UserId == "" || len(request.UserId) >= 20 {
