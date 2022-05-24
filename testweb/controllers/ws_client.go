@@ -31,6 +31,7 @@ var (
 type Client struct {
 	Addr          string // 客户端地址
 	Token         string // 用户token，用户登录以后才有
+	UserId        int64  // 用户Id 登录以后才有
 	LoginTime     uint64 // 登录时间 登录以后才有
 	FirstTime     uint64 // 首次连接时间
 	HeartbeatTime uint64 // 用户上次心跳时间
@@ -113,9 +114,10 @@ func (c *Client) SendMsg(msg []byte) {
 }
 
 // 用户登录
-func (c *Client) Login(appId uint32, userId string, loginTime uint64) {
+func (c *Client) Login(appId uint32, token string, userId int64, loginTime uint64) {
 	c.AppId = appId
-	c.Token = userId
+	c.Token = token
+	c.UserId = userId
 	c.LoginTime = loginTime
 	// 登录成功=心跳一次
 	c.Heartbeat(loginTime)

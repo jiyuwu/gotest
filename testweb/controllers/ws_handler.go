@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jiyuwu/gotest/testweb/common"
@@ -36,15 +37,15 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 
 	fmt.Println("webSocket_request 用户登录", seq, "Token", request.Token)
 
-	// TODO::进行用户权限认证，一般是客户端传入TOKEN，然后检验TOKEN是否合法，通过TOKEN解析出来用户ID
-	if request.UserId == "" || len(request.UserId) >= 20 {
+	if request.Token == "" || len(request.Token) < 20 {
 		code = common.UnauthorizedUserId
 		fmt.Println("用户登录 非法的用户", seq, request.UserId)
 
 		return
 	}
 	fmt.Println("用户登录 成功", seq, client.Addr, request.UserId, currentTime)
-	client.Token = request.UserId
+	userId, _ := strconv.ParseInt(request.UserId, 0, 64)
+	client.Login(request.AppId, request.Token, userId, currentTime)
 	return
 }
 
