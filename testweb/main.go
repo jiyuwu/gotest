@@ -5,6 +5,7 @@ import (
 	"github.com/jiyuwu/gotest/testweb/controllers"
 	"github.com/jiyuwu/gotest/testweb/dao"
 	"github.com/jiyuwu/gotest/testweb/middleware"
+	"github.com/jiyuwu/gotest/testweb/task"
 )
 
 func main() {
@@ -19,6 +20,9 @@ func main() {
 	middleware.Router(r)       //普通接口
 	middleware.WebsocketInit() // websocket接口
 
+	// 定时任务
+	task.Init()
+
 	r.GET("/ws", controllers.WsHandler)
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
@@ -27,5 +31,6 @@ func main() {
 	})
 	// 初始化数据库
 	dao.InitDatabaseConn()
+
 	r.Run(":9962")
 }

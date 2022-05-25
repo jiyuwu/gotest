@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"runtime/debug"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
@@ -139,6 +140,50 @@ func (c *Client) IsHeartbeatTimeout(currentTime uint64) (timeout bool) {
 	return
 }
 
+// 定时清理超时连接
+func ClearTimeoutConnections() {
+	currentTime := uint64(time.Now().Unix())
+
+	clients := clientManager.GetClients()
+	for client := range clients {
+		if client.IsHeartbeatTimeout(currentTime) {
+			fmt.Println("心跳时间超时 关闭连接", client.Addr, client.UserId, client.LoginTime, client.HeartbeatTime)
+			client.Socket.Close()
+			clientManager.Unregister <- client
+		}
+	}
+}
+
+// GetClients
+func (manager *ClientManager) GetClients() (clients map[*Client]bool) {
+
+	clients = make(map[*Client]bool)
+
+	manager.ClientsRange(func(client *Client, value bool) (result bool) {
+		clients[client] = value
+
+		return true
+	})
+
+	return
+}
+
+// 遍历
+func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (result bool)) {
+
+	manager.ClientsLock.RLock()
+	defer manager.ClientsLock.RUnlock()
+
+	for key, value := range manager.Clients {
+		result := f(key, value)
+		if result == false {
+			return
+		}
+	}
+
+	return
+}
+
 // Start is  项目运行前, 协程开启start -> go Manager.Start()
 func Start() {
 	for {
@@ -148,7 +193,13 @@ func Start() {
 			log.Printf("新用户加入:%v", conn.Token)
 			clientManager.AddClients(conn)
 
-			jsonMessage, _ := json.Marshal(vo.NewResponseHead("", "", 123, "", "新用户加入"))
+			jsonMessage, _ := json.Marshal(vo.NewResponseHead("", "Register", 123, "", "新用户加入"))
+			conn.Send <- jsonMessage
+		case conn := <-clientManager.Unregister:
+			log.Printf("用户离开:%v", conn.Token)
+			clientManager.DelClients(conn)
+
+			jsonMessage, _ := json.Marshal(vo.NewResponseHead("", "Unregister", 123, "", "用户离开"))
 			conn.Send <- jsonMessage
 		}
 	}
@@ -200,13 +251,11 @@ func WsHandler(c *gin.Context) {
 		return
 	}
 
-	client := &Client{ //连接信息
-		Socket: conn,
-		Send:   make(chan []byte),
-	}
-	clientManager.Register <- client
+	currentTime := uint64(time.Now().Unix())
+	client := NewClient(conn.RemoteAddr().String(), conn, currentTime)
 
 	go client.Read()
 
 	go client.Write()
+	clientManager.Register <- client
 }
