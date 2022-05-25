@@ -1,6 +1,11 @@
 package vo
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"strings"
+)
 
 type ModelPrefix struct {
 	Msg  string `json:"msg"`
@@ -64,4 +69,40 @@ func (h *Head) String() (headStr string) {
 
 func NewResponse(code uint32, codeMsg string, data interface{}) *Response {
 	return &Response{Code: code, CodeMsg: codeMsg, Data: data}
+}
+
+// ip port
+type Server struct {
+	Ip   string `json:"ip"`   // ip
+	Port string `json:"port"` // 端口
+}
+
+func NewServer(ip string, port string) *Server {
+
+	return &Server{Ip: ip, Port: port}
+}
+
+func (s *Server) String() (str string) {
+	if s == nil {
+		return
+	}
+
+	str = fmt.Sprintf("%s:%s", s.Ip, s.Port)
+
+	return
+}
+
+func StringToServer(str string) (server *Server, err error) {
+	list := strings.Split(str, ":")
+	if len(list) != 2 {
+
+		return nil, errors.New("err")
+	}
+
+	server = &Server{
+		Ip:   list[0],
+		Port: list[1],
+	}
+
+	return
 }

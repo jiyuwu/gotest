@@ -28,6 +28,20 @@ var (
 	serverPort string
 )
 
+func GetServer() (server *vo.Server) {
+	server = vo.NewServer(serverIp, serverPort)
+
+	return
+}
+
+func IsLocal(server *vo.Server) (isLocal bool) {
+	if server.Ip == serverIp && server.Port == serverPort {
+		isLocal = true
+	}
+
+	return
+}
+
 // Client is a websocket client
 type Client struct {
 	Addr          string // 客户端地址
@@ -253,7 +267,7 @@ func WsHandler(c *gin.Context) {
 
 	currentTime := uint64(time.Now().Unix())
 	client := NewClient(conn.RemoteAddr().String(), conn, currentTime)
-
+	log.Printf("客户端RemoteAddr信息:%s", conn.RemoteAddr().String())
 	go client.Read()
 
 	go client.Write()
