@@ -3,9 +3,12 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"strconv"
+	"log"
+	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
 	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/vo"
 )
@@ -44,8 +47,7 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 		return
 	}
 	fmt.Println("用户登录 成功", seq, client.Addr, request.UserId, currentTime)
-	userId, _ := strconv.ParseInt(request.UserId, 0, 64)
-	client.Login(request.AppId, request.Token, userId, currentTime)
+	client.Login(request.AppId, request.Token, request.UserId, currentTime)
 	return
 }
 
@@ -68,4 +70,21 @@ func HeartbeatController(client *Client, seq string, message []byte) (code uint3
 	client.Heartbeat(currentTime)
 
 	return
+}
+
+// 请求升级长连接
+func WsHandler(c *gin.Context) {
+	conn, err := (&websocket.Upgrader{CheckOrigin: func(r *http.Request) bool { return true }}).Upgrade(c.Writer, c.Request, nil)
+	if err != nil {
+		http.NotFound(c.Writer, c.Request)
+		return
+	}
+
+	currentTime := uint64(time.Now().Unix())
+	client := NewClient(conn.RemoteAddr().String(), conn, currentTime)
+	log.Printf("客户端RemoteAddr信息:%s", conn.RemoteAddr().String())
+	go client.Read()
+
+	go client.Write()
+	clientManager.Register <- client
 }
