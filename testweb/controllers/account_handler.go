@@ -2,8 +2,10 @@ package controllers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jiyuwu/gotest/testweb/cache"
 	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/dao"
 	"github.com/jiyuwu/gotest/testweb/vo"
@@ -30,15 +32,24 @@ func (ah *AccountHandler) login(c *gin.Context) {
 		log.Info("login req:%+v err:%s", req, err)
 		return
 	}
+	// 第二步登录验证
 	var accDao dao.AccountDAO
 	t, err := accDao.GetAccount(req.UserName, common.MD5(req.Password))
-	// 第二步登录成功后生成token并更新
 	if err != nil {
 		result.Code = 2
 		result.Msg = "login failure"
 		c.JSON(http.StatusOK, result)
 		return
 	}
+	// 存储数据
+	err = cache.SetUserTokenInfo(vo.GetUserKey(req.AppId, strconv.FormatInt(t.Id, 10)), t.Token)
+	if err != nil {
+		result.Code = 3
+		result.Msg = "save token failure"
+		c.JSON(http.StatusOK, result)
+		return
+	}
+
 	result.Token = t.Token
 	result.Id = t.Id
 	result.Code = 1

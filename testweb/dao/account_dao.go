@@ -20,9 +20,7 @@ func (dao AccountDAO) GetAccount(username, password string) (*entity.AccountEnti
 		return nil, e
 	}
 	if e == nil {
-		//执行注销之前需要检查注销原token，保证一个用户一个持久化连接
-
-		// 查询到用户生成并更新token
+		// 查询到用户生成并更新token,数据库存储的token其实没什么意义。因为要模仿微信多端登录，考虑效率问题可以移除更新。
 		token := uuid.New()
 		ret := databaseConn.Table(acc.TableName()).Where("Id = ?", acc.Id).Updates(map[string]interface{}{"Token": token, "UpdateTime": time.Now().UTC()}).Scan(&acc)
 		if ret.Error == nil {

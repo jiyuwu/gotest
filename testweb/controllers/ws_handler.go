@@ -9,6 +9,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"github.com/jiyuwu/gotest/testweb/cache"
 	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/vo"
 )
@@ -30,6 +31,7 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 	code = common.OK
 	currentTime := uint64(time.Now().Unix())
 
+	// 验证参数
 	request := &vo.Login{}
 	if err := json.Unmarshal(message, request); err != nil {
 		code = common.ParameterIllegal
@@ -38,16 +40,43 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 		return
 	}
 
-	fmt.Println("webSocket_request 用户登录", seq, "Token", request.Token)
-
-	if request.Token == "" || len(request.Token) < 20 {
+	// 验证token正确性
+	if request.Token == "" || len(request.Token) < 10 {
 		code = common.UnauthorizedUserId
 		fmt.Println("用户登录 非法的用户", seq, request.UserId)
+		return
+	}
+	if token, err := cache.GetUserTokenInfo(vo.GetUserKey(request.AppId, request.UserId)); err != nil || token != request.Token {
+		code = common.UnauthorizedUserId
+		fmt.Println("用户登录 非法的用户", seq, request.UserId)
+		return
+	}
+
+	if client.IsLogin() {
+		fmt.Println("用户登录 用户已经登录", client.AppId, client.UserId, seq)
+		code = common.OperationFailure
 
 		return
 	}
-	fmt.Println("用户登录 成功", seq, client.Addr, request.UserId, currentTime)
-	client.Login(request.AppId, request.Token, request.UserId, currentTime)
+
+	// 设置在线缓存
+	userOnline := vo.UserLogin(serverIp, serverPort, request.AppId, request.UserId, client.Addr, currentTime)
+	err := cache.SetUserOnlineInfo(client.GetKey(), userOnline)
+	if err != nil {
+		code = common.ServerError
+		fmt.Println("用户登录 SetUserOnlineInfo", seq, err)
+
+		return
+	}
+
+	// 执行登录channel
+	login := &login{
+		AppId:  request.AppId,
+		UserId: request.UserId,
+		Token:  request.Token,
+		Client: client,
+	}
+	clientManager.Login <- login
 	return
 }
 

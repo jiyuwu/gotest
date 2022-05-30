@@ -1,6 +1,10 @@
 package controllers
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+	"time"
+)
 
 // 连接管理
 type ClientManager struct {
@@ -9,7 +13,7 @@ type ClientManager struct {
 	Users       map[string]*Client // 登录的用户 // appId+uuid
 	UserLock    sync.RWMutex       // 读写锁
 	Register    chan *Client       // 连接连接处理
-	Login       chan *Client       // 用户登录处理
+	Login       chan *login        // 用户登录处理
 	Unregister  chan *Client       // 断开连接处理程序
 	Broadcast   chan []byte        // 广播 向全部成员发送数据
 }
@@ -19,10 +23,19 @@ func NewClientManager() (clientManager *ClientManager) {
 		Clients:    make(map[*Client]bool),
 		Users:      make(map[string]*Client),
 		Register:   make(chan *Client, 1000),
-		Login:      make(chan *Client, 1000),
+		Login:      make(chan *login, 1000),
 		Unregister: make(chan *Client, 1000),
 		Broadcast:  make(chan []byte, 1000),
 	}
+
+	return
+}
+func (manager *ClientManager) InClient(client *Client) (ok bool) {
+	manager.ClientsLock.RLock()
+	defer manager.ClientsLock.RUnlock()
+
+	// 连接存在，在添加
+	_, ok = manager.Clients[client]
 
 	return
 }
@@ -73,4 +86,50 @@ func (manager *ClientManager) ClientsRange(f func(client *Client, value bool) (r
 	}
 
 	return
+}
+
+// 添加用户
+func (manager *ClientManager) AddUsers(key string, client *Client) {
+	manager.UserLock.Lock()
+	defer manager.UserLock.Unlock()
+
+	manager.Users[key] = client
+}
+
+// 删除用户
+func (manager *ClientManager) DelUsers(client *Client) (result bool) {
+	manager.UserLock.Lock()
+	defer manager.UserLock.Unlock()
+
+	key := GetUserKey(client.AppId, client.UserId)
+	if value, ok := manager.Users[key]; ok {
+		// 判断是否为相同的用户
+		if value.Addr != client.Addr {
+
+			return
+		}
+		delete(manager.Users, key)
+		result = true
+	}
+
+	return
+}
+
+// 用户登录
+func (manager *ClientManager) EventLogin(login *login) {
+
+	client := login.Client
+	// 连接存在，在添加
+	if manager.InClient(client) {
+		userKey := client.GetKey()
+		manager.AddUsers(userKey, login.Client)
+	}
+	loginTime := uint64(time.Now().Unix())
+	// 登录成功=心跳一次
+	login.Client.Heartbeat(loginTime)
+	login.Client.AppId = login.AppId
+	login.Client.Token = login.Token
+	login.Client.UserId = login.UserId
+	login.Client.LoginTime = loginTime
+	fmt.Println("EventLogin 用户登录", client.Addr, login.AppId, login.UserId)
 }

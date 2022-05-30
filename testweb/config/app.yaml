@@ -1,0 +1,15 @@
+app:
+  logFile: log/gin.log
+  httpPort: 9962
+  webSocketPort: 9962
+  rpcPort: 9963
+  httpUrl: 127.0.0.1:9962
+  webSocketUrl:  127.0.0.1:9962
+
+
+redis:
+  addr: "redis.default.svc.cluster.local:6379"
+  password: ""
+  DB: 0
+  poolSize: 30
+  minIdleConns: 30

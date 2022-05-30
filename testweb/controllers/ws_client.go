@@ -39,6 +39,20 @@ func IsLocal(server *vo.Server) (isLocal bool) {
 	return
 }
 
+// 读取客户端数据
+func (c *Client) GetKey() (key string) {
+	key = GetUserKey(c.AppId, c.UserId)
+
+	return
+}
+
+// 获取用户key
+func GetUserKey(appId uint32, userId string) (key string) {
+	key = fmt.Sprintf("%d_%s", appId, userId)
+
+	return
+}
+
 // Client is a websocket client
 type Client struct {
 	Addr          string // 客户端地址
@@ -83,13 +97,11 @@ func (c *Client) SendMsg(msg []byte) {
 }
 
 // 用户登录
-func (c *Client) Login(appId uint32, token string, userId string, loginTime uint64) {
-	c.AppId = appId
-	c.Token = token
-	c.UserId = userId
-	c.LoginTime = loginTime
-	// 登录成功=心跳一次
-	c.Heartbeat(loginTime)
+type login struct {
+	AppId  uint32
+	UserId string
+	Token  string
+	Client *Client
 }
 
 // 用户心跳
@@ -122,6 +134,19 @@ func ClearTimeoutConnections() {
 	}
 }
 
+// 是否登录了
+func (c *Client) IsLogin() (isLogin bool) {
+
+	// 用户登录了
+	if c.UserId != "" {
+		isLogin = true
+
+		return
+	}
+
+	return
+}
+
 // Start is  项目运行前, 协程开启start -> go Manager.Start()
 func Start() {
 	for {
@@ -139,6 +164,9 @@ func Start() {
 
 			jsonMessage, _ := json.Marshal(vo.NewResponseHead("", "Unregister", 123, "", "用户离开"))
 			conn.Send <- jsonMessage
+		case login := <-clientManager.Login:
+			// 用户登录
+			clientManager.EventLogin(login)
 		}
 	}
 }
