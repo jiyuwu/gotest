@@ -12,6 +12,7 @@ func Router(server *gin.Engine) {
 // Websocket 路由
 func WebsocketInit() {
 	controllers.Register("login", controllers.LoginController)
+	controllers.Register("sendAllMsg", controllers.SendAllMsgController)
 	controllers.Register("heartbeat", controllers.HeartbeatController)
 	controllers.Register("ping", controllers.PingController)
 }

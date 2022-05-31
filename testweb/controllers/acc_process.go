@@ -85,18 +85,18 @@ func ProcessData(client *Client, message []byte) {
 
 	msg = common.GetErrorMessage(code, msg)
 
-	responseHead := vo.NewResponseHead(seq, cmd, code, msg, data)
+	vo.NewResponseHead(seq, cmd, code, msg, data)
+	//responseHead := vo.NewResponseHead(seq, cmd, code, msg, data)
 
-	headByte, err := json.Marshal(responseHead)
-	if err != nil {
-		fmt.Println("处理数据 json Marshal", err)
+	// headByte, err := json.Marshal(responseHead)
+	// if err != nil {
+	// 	fmt.Println("处理数据 json Marshal", err)
+	// 	return
+	// }
+	// fmt.Println("acc_response send", client.Addr, client.AppId, client.Token, "cmd", cmd, "code", code)
+	//client.SendMsg(headByte)
 
-		return
-	}
-
-	client.SendMsg(headByte)
-
-	fmt.Println("acc_response send", client.Addr, client.AppId, client.Token, "cmd", cmd, "code", code)
+	// fmt.Println("acc_response send", client.Addr, client.AppId, client.Token, "cmd", cmd, "code", code)
 
 	return
 }

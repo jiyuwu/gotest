@@ -15,7 +15,7 @@ type ClientManager struct {
 	Register    chan *Client       // 连接连接处理
 	Login       chan *login        // 用户登录处理
 	Unregister  chan *Client       // 断开连接处理程序
-	Broadcast   chan []byte        // 广播 向全部成员发送数据
+	Broadcast   chan *broadcast    // 广播 向其它成员发送数据
 }
 
 func NewClientManager() (clientManager *ClientManager) {
@@ -25,7 +25,7 @@ func NewClientManager() (clientManager *ClientManager) {
 		Register:   make(chan *Client, 1000),
 		Login:      make(chan *login, 1000),
 		Unregister: make(chan *Client, 1000),
-		Broadcast:  make(chan []byte, 1000),
+		Broadcast:  make(chan *broadcast, 1000),
 	}
 
 	return

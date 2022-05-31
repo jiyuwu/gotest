@@ -80,6 +80,38 @@ func LoginController(client *Client, seq string, message []byte) (code uint32, m
 	return
 }
 
+// 向所有人发消息
+func SendAllMsgController(client *Client, seq string, message []byte) (code uint32, msg string, data interface{}) {
+	code = common.OK
+	//currentTime := uint64(time.Now().Unix())
+
+	// 验证参数
+	request := &vo.Msg{}
+	if err := json.Unmarshal(message, request); err != nil {
+		code = common.ParameterIllegal
+		fmt.Println("群聊 解析数据失败", seq, err)
+		return
+	}
+
+	if !client.IsLogin() {
+		fmt.Println("用户登录 用户未登录", client.AppId, client.UserId, seq)
+		code = common.OperationFailure
+		return
+	}
+
+	// 执行登录channel
+	broadcast := &broadcast{
+		AppId:   request.AppId,
+		UserId:  request.UserId,
+		GroupId: request.GroupId,
+		Msg:     message,
+		Client:  client,
+	}
+	clientManager.Broadcast <- broadcast
+
+	return
+}
+
 // 心跳接口
 func HeartbeatController(client *Client, seq string, message []byte) (code uint32, msg string, data interface{}) {
 
@@ -93,9 +125,6 @@ func HeartbeatController(client *Client, seq string, message []byte) (code uint3
 
 		return
 	}
-
-	fmt.Println("webSocket_request 心跳接口", client.AppId, client.Token)
-
 	client.Heartbeat(currentTime)
 
 	return

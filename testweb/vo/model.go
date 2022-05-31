@@ -27,6 +27,14 @@ type Login struct {
 	UserId string `json:"userId,omitempty"`
 }
 
+// 群聊消息
+type Msg struct {
+	GroupId int64  `json:"groupId"` // 组Id
+	AppId   uint32 `json:"appId,omitempty"`
+	UserId  string `json:"userId,omitempty"`
+	Msg     string `json:"msg,omitempty"`
+}
+
 // 心跳请求数据
 type HeartBeat struct {
 	UserId string `json:"userId,omitempty"`

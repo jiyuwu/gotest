@@ -104,6 +104,15 @@ type login struct {
 	Client *Client
 }
 
+// 广播发消息
+type broadcast struct {
+	AppId   uint32
+	UserId  string
+	GroupId int64
+	Msg     []byte
+	Client  *Client
+}
+
 // 用户心跳
 func (c *Client) Heartbeat(currentTime uint64) {
 	c.HeartbeatTime = currentTime
@@ -167,6 +176,14 @@ func Start() {
 		case login := <-clientManager.Login:
 			// 用户登录
 			clientManager.EventLogin(login)
+		case message := <-clientManager.Broadcast:
+			// 广播事件
+			clients := clientManager.GetClients()
+			for conn := range clients {
+				if conn != message.Client {
+					conn.Send <- message.Msg
+				}
+			}
 		}
 	}
 }
