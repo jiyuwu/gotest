@@ -121,17 +121,17 @@ func (manager *ClientManager) EventLogin(login *login) {
 	client := login.Client
 	// 连接存在，在添加
 	if manager.InClient(client) {
+		loginTime := uint64(time.Now().Unix())
+		// 登录成功=心跳一次
+		login.Client.Heartbeat(loginTime)
+		login.Client.AppId = login.AppId
+		login.Client.Token = login.Token
+		login.Client.UserId = login.UserId
+		login.Client.LoginTime = loginTime
+		fmt.Println("EventLogin 用户登录", client.Addr, login.AppId, login.UserId)
 		userKey := client.GetKey()
 		manager.AddUsers(userKey, login.Client)
 	}
-	loginTime := uint64(time.Now().Unix())
-	// 登录成功=心跳一次
-	login.Client.Heartbeat(loginTime)
-	login.Client.AppId = login.AppId
-	login.Client.Token = login.Token
-	login.Client.UserId = login.UserId
-	login.Client.LoginTime = loginTime
-	fmt.Println("EventLogin 用户登录", client.Addr, login.AppId, login.UserId)
 }
 
 // 获取用户的连接
