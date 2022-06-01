@@ -133,3 +133,30 @@ func (manager *ClientManager) EventLogin(login *login) {
 	login.Client.LoginTime = loginTime
 	fmt.Println("EventLogin 用户登录", client.Addr, login.AppId, login.UserId)
 }
+
+// 获取用户的连接
+func (manager *ClientManager) GetUserClient(appId uint32, userId string) (client *Client) {
+
+	manager.UserLock.RLock()
+	defer manager.UserLock.RUnlock()
+
+	userKey := GetUserKey(appId, userId)
+	if value, ok := manager.Users[userKey]; ok {
+		client = value
+	}
+
+	return
+}
+
+// 获取用户的连接列表
+func (manager *ClientManager) GetUserClients() (clients []*Client) {
+
+	clients = make([]*Client, 0)
+	manager.UserLock.RLock()
+	defer manager.UserLock.RUnlock()
+	for _, v := range manager.Users {
+		clients = append(clients, v)
+	}
+
+	return
+}

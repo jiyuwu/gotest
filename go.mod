@@ -12,6 +12,8 @@ require (
 	github.com/rogpeppe/go-internal v1.8.0 // indirect
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.12.0
+	google.golang.org/grpc v1.46.2
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/redis.v5 v5.2.9
 	gorm.io/driver/mysql v1.3.2
 	gorm.io/gorm v1.23.3

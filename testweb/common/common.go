@@ -3,6 +3,10 @@ package common
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
+	"fmt"
+	"net"
+	"time"
 )
 
 func MD5(str string) string {
@@ -56,4 +60,57 @@ func GetErrorMessage(code uint32, message string) string {
 	}
 
 	return codeMessage
+}
+func GetServerIp() string {
+	ip, err := ExternalIP()
+	if err != nil {
+		return ""
+	}
+	return ip.String()
+}
+func ExternalIP() (net.IP, error) {
+	ifaces, err := net.Interfaces()
+	if err != nil {
+		return nil, err
+	}
+	for _, iface := range ifaces {
+		if iface.Flags&net.FlagUp == 0 {
+			continue // interface down
+		}
+		if iface.Flags&net.FlagLoopback != 0 {
+			continue // loopback interface
+		}
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return nil, err
+		}
+		for _, addr := range addrs {
+			if ip := getIpFromAddr(addr); ip != nil {
+				return ip, nil
+			}
+		}
+	}
+	return nil, errors.New("connected to the network?")
+}
+
+func getIpFromAddr(addr net.Addr) net.IP {
+	var ip net.IP
+	switch v := addr.(type) {
+	case *net.IPNet:
+		ip = v.IP
+	case *net.IPAddr:
+		ip = v.IP
+	}
+	if ip == nil || ip.IsLoopback() {
+		return nil
+	}
+	return ip.To4()
+}
+
+func GetOrderIdTime() (orderId string) {
+
+	currentTime := time.Now().Nanosecond()
+	orderId = fmt.Sprintf("%d", currentTime)
+
+	return
 }

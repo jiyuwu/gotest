@@ -10,6 +10,7 @@ import (
 	"github.com/jiyuwu/gotest/testweb/controllers"
 	"github.com/jiyuwu/gotest/testweb/dao"
 	"github.com/jiyuwu/gotest/testweb/middleware"
+	"github.com/jiyuwu/gotest/testweb/rpcinterface/rpc_server"
 	"github.com/jiyuwu/gotest/testweb/task"
 	"github.com/spf13/viper"
 )
@@ -21,8 +22,6 @@ func main() {
 	initRedis()
 	go controllers.Start()
 
-	//健康检查  1.没有token的直接失效 2.没有超时的失效
-
 	r := gin.Default()
 	r.Use(middleware.Cors())
 	middleware.Router(r)       //普通接口
@@ -30,6 +29,8 @@ func main() {
 
 	// 定时任务
 	task.Init()
+	//服务器监控初始化
+	task.ServerInit()
 
 	r.GET("/ws", controllers.WsHandler)
 	r.GET("/ping", func(c *gin.Context) {
@@ -39,7 +40,9 @@ func main() {
 	})
 	// 初始化数据库
 	dao.InitDatabaseConn()
-
+	//开启rpc时，存ip+rpc_port到cache，方便集群发消息。
+	controllers.SetServer()
+	go rpc_server.Init()
 	httpPort := viper.GetString("app.httpPort")
 	r.Run(":" + httpPort)
 }

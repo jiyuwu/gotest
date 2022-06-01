@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/vo"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -24,6 +26,11 @@ var (
 	serverIp   string
 	serverPort string
 )
+
+func SetServer() {
+	serverIp = common.GetServerIp()
+	serverPort = viper.GetString("app.rpcPort")
+}
 
 func GetServer() (server *vo.Server) {
 	server = vo.NewServer(serverIp, serverPort)
@@ -156,6 +163,13 @@ func (c *Client) IsLogin() (isLogin bool) {
 	return
 }
 
+// 获取用户所在的连接
+func GetUserClient(appId uint32, userId string) (client *Client) {
+	client = clientManager.GetUserClient(appId, userId)
+
+	return
+}
+
 // Start is  项目运行前, 协程开启start -> go Manager.Start()
 func Start() {
 	for {
@@ -177,7 +191,13 @@ func Start() {
 			// 用户登录
 			clientManager.EventLogin(login)
 		case message := <-clientManager.Broadcast:
-			// 广播事件
+			// 其它服务器rpc消息推送
+			orderId := common.GetOrderIdTime()
+			_, err := SendOtherUserMessage(message.AppId, message.UserId, orderId, "sendAllMsg", string(message.Msg))
+			if err != nil {
+				fmt.Println("SendOtherUserMessage", err.Error())
+			}
+			// 本地广播事件
 			clients := clientManager.GetClients()
 			for conn := range clients {
 				if conn != message.Client {
