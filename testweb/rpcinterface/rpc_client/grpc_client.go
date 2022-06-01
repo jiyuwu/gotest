@@ -26,7 +26,7 @@ func SendMsg(server *vo.Server, seq string, appId uint32, userId string, cmd str
 	defer conn.Close()
 
 	c := rpc_proto.NewAccServerClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 
 	req := rpc_proto.SendMsgReq{
