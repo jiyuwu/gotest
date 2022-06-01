@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"errors"
 	"fmt"
 	"time"
 
@@ -11,18 +10,8 @@ import (
 
 // 给本机用户发送消息
 func SendUserMessageLocal(appId uint32, userId string, data string) (sendResults bool, err error) {
-	fmt.Println("给本机用户发送消息", appId, userId)
-	client := GetUserClient(appId, userId)
-	if client == nil {
-		err = errors.New("用户不在线")
-
-		return
-	}
-
-	// 发送消息
-	client.SendMsg([]byte(data))
+	AllSendMessages(appId, userId, data)
 	sendResults = true
-
 	return
 }
 

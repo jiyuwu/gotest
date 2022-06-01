@@ -160,3 +160,18 @@ func (manager *ClientManager) GetUserClients() (clients []*Client) {
 
 	return
 }
+
+// 向全部成员(除了自己)发送数据
+func AllSendMessages(appId uint32, userId string, data string) {
+	ignoreClient := clientManager.GetUserClient(appId, userId)
+	clientManager.sendAppIdAll([]byte(data), appId, ignoreClient)
+}
+
+func (manager *ClientManager) sendAppIdAll(message []byte, appId uint32, ignoreClient *Client) {
+	clients := manager.GetUserClients()
+	for _, conn := range clients {
+		if conn != ignoreClient && conn.AppId == appId {
+			conn.SendMsg(message)
+		}
+	}
+}
