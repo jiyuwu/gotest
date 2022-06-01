@@ -11,7 +11,7 @@ import (
 
 // 给本机用户发送消息
 func SendUserMessageLocal(appId uint32, userId string, data string) (sendResults bool, err error) {
-
+	fmt.Println("给本机用户发送消息", appId, userId)
 	client := GetUserClient(appId, userId)
 	if client == nil {
 		err = errors.New("用户不在线")
@@ -42,6 +42,8 @@ func SendOtherUserMessage(appId uint32, userId string, msgId, cmd, message strin
 			fmt.Println("给其它服务器用户发消息", server, msgId, appId, userId, cmd, "json", message)
 			rpc_client.SendMsg(server, msgId, appId, userId, cmd, "json", message)
 		}
+		// fmt.Println("给其它服务器用户发消息", server, msgId, appId, userId, cmd, "json", message)
+		// rpc_client.SendMsg(server, msgId, appId, userId, cmd, "json", message)
 	}
 	return
 }
