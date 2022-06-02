@@ -3,11 +3,11 @@ package rpc_server
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 
 	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/controllers"
+	"github.com/jiyuwu/gotest/testweb/logs"
 	"github.com/jiyuwu/gotest/testweb/rpcinterface/rpc_proto"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -32,8 +32,7 @@ func setErr(rsp protoiface.MessageV1, code uint32, message string) {
 
 // 给本机用户发消息
 func (s *server) SendMsg(c context.Context, req *rpc_proto.SendMsgReq) (rsp *rpc_proto.SendMsgRsp, err error) {
-
-	fmt.Println("grpc_request 给本机用户发消息", req.String())
+	logs.Info(fmt.Sprintf("grpc_request 给本机用户发消息%v", req))
 
 	rsp = &rpc_proto.SendMsgRsp{}
 
@@ -46,14 +45,14 @@ func (s *server) SendMsg(c context.Context, req *rpc_proto.SendMsgReq) (rsp *rpc
 
 	sendResults, err := controllers.SendUserMessageLocal(req.GetAppId(), req.GetUserId(), req.GetMsg())
 	if err != nil {
-		fmt.Println("系统错误", err)
+		logs.Error(fmt.Sprintf("系统错误%v", err))
 		setErr(rsp, common.ServerError, "")
 
 		return rsp, nil
 	}
 
 	if !sendResults {
-		fmt.Println("发送失败", err)
+		logs.Error(fmt.Sprintf("发送失败%v", err))
 		setErr(rsp, common.OperationFailure, "")
 
 		return rsp, nil
@@ -61,22 +60,22 @@ func (s *server) SendMsg(c context.Context, req *rpc_proto.SendMsgReq) (rsp *rpc
 
 	setErr(rsp, common.OK, "")
 
-	fmt.Println("grpc_response 给本机用户发消息", rsp.String())
+	logs.Info(fmt.Sprintf("grpc_response 给本机用户发消息%s", rsp.String()))
 	return
 }
 
 func Init() {
 	rpcPort := viper.GetString("app.rpcPort")
 	rpcIp, _ := common.ExternalIP()
-	fmt.Println("rpc server 启动", rpcIp.String(), rpcPort)
+	logs.Info(fmt.Sprintf("rpc server 启动%s:%s", rpcIp.String(), rpcPort))
 
 	lis, err := net.Listen("tcp", rpcIp.String()+":"+rpcPort)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		logs.Error(fmt.Sprintf("failed to listen: %v", err))
 	}
 	s := grpc.NewServer()
 	rpc_proto.RegisterAccServerServer(s, &server{})
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("failed to serve: %v", err)
+		logs.Error(fmt.Sprintf("failed to serve: %v", err))
 	}
 }

@@ -23,8 +23,7 @@ func cleanConnection(param interface{}) (result bool) {
 		}
 	}()
 
-	fmt.Println("定时任务，清理超时连接", param)
-
+	//logs.Info(fmt.Sprintf("定时任务，清理超时连接%v", param))
 	controllers.ClearTimeoutConnections()
 
 	return

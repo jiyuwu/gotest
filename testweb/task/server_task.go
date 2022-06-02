@@ -7,6 +7,7 @@ import (
 
 	"github.com/jiyuwu/gotest/testweb/cache"
 	"github.com/jiyuwu/gotest/testweb/controllers"
+	"github.com/jiyuwu/gotest/testweb/logs"
 )
 
 func ServerInit() {
@@ -25,8 +26,7 @@ func server(param interface{}) (result bool) {
 
 	server := controllers.GetServer()
 	currentTime := uint64(time.Now().Unix())
-	fmt.Println("定时任务，服务注册", param, server, currentTime)
-
+	//logs.Info(fmt.Sprintf("定时任务，服务注册%v%v%v", param, server, currentTime))
 	cache.SetServerInfo(server, currentTime)
 
 	return
@@ -40,8 +40,7 @@ func serverDefer(param interface{}) (result bool) {
 		}
 	}()
 
-	fmt.Println("服务下线", param)
-
+	logs.Info(fmt.Sprintf("服务下线%v", param))
 	server := controllers.GetServer()
 	cache.DelServerInfo(server)
 

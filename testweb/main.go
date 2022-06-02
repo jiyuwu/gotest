@@ -9,6 +9,7 @@ import (
 	"github.com/jiyuwu/gotest/testweb/cache"
 	"github.com/jiyuwu/gotest/testweb/controllers"
 	"github.com/jiyuwu/gotest/testweb/dao"
+	"github.com/jiyuwu/gotest/testweb/logs"
 	"github.com/jiyuwu/gotest/testweb/middleware"
 	"github.com/jiyuwu/gotest/testweb/rpcinterface/rpc_server"
 	"github.com/jiyuwu/gotest/testweb/task"
@@ -16,10 +17,11 @@ import (
 )
 
 func main() {
-	gin.SetMode(gin.ReleaseMode) //线上环境
 	initConfig()
 	initFile()
 	initRedis()
+	// 全局日志，非针对请求
+	logs.InitLogger()
 	go controllers.Start()
 
 	r := gin.Default()
@@ -53,7 +55,7 @@ func initFile() {
 	gin.DisableConsoleColor()
 
 	// Logging to a file.
-	logFile := viper.GetString("app.logFile")
+	logFile := viper.GetString("app.ginLogFile")
 	f, _ := os.Create(logFile)
 	gin.DefaultWriter = io.MultiWriter(f)
 }
@@ -64,12 +66,11 @@ func initConfig() {
 
 	err := viper.ReadInConfig()
 	if err != nil {
-		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+		logs.Error(fmt.Sprintf("Fatal error config file: %s \n", err))
 	}
 
-	fmt.Println("config app:", viper.Get("app"))
-	fmt.Println("config redis:", viper.Get("redis"))
-
+	// fmt.Println("config app:", viper.Get("app"))
+	// fmt.Println("config redis:", viper.Get("redis"))
 }
 
 func initRedis() {

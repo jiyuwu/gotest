@@ -1,5 +1,6 @@
 app:
-  logFile: log/gin.log
+  ginLogFile: log/gin.log
+  logFile: log/new.log
   httpPort: 9962
   webSocketPort: 9962
   rpcPort: 9963
