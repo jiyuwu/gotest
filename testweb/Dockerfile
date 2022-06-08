@@ -16,8 +16,6 @@ WORKDIR /app
 FROM alpine:latest as final
 COPY --from=builder /docker/testweb/app /app/
 COPY --from=builder /docker/testweb/config /app/config
-COPY --from=builder /etc/passwd /etc/passwd
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app/app"]
