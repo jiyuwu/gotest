@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine
+FROM golang:1.17-alpine AS builder
 # docker中的工作目录
 WORKDIR /docker
 # 将当前目录同步到docker工作目录下，也可以只配置需要的目录和文件（配置目录、编译后的程序等）
@@ -13,11 +13,11 @@ ENV GO111MODULE=on \
 RUN cd testweb && go build -o app .
 
 WORKDIR /app
-FROM alpine:latest
-COPY --from=docker /docker/testweb/app /app/
-COPY --from=docker /docker/testweb/config /app/config
-COPY --from=docker /etc/passwd /etc/passwd
-COPY --from=docker /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+FROM alpine:latest as final
+COPY --from=builder /docker/testweb/app /app/
+COPY --from=builder /docker/testweb/config /app/config
+COPY --from=builder /etc/passwd /etc/passwd
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app/app"]
