@@ -20,4 +20,4 @@ COPY --from=docker /etc/passwd /etc/passwd
 COPY --from=docker /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 EXPOSE 9962
 # 这里跟编译完的文件名一致
-ENTRYPOINT  ["./app"]
+ENTRYPOINT  ["./app/app"]
