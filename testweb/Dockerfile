@@ -15,7 +15,7 @@ RUN cd testweb && go build -o app .
 
 FROM alpine:latest as final
 COPY --from=builder /docker/testweb/app ./
-COPY --from=builder /docker/testweb/config ./
+COPY --from=builder /docker/testweb/config ./config/
 EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app"]
