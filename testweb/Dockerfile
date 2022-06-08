@@ -15,7 +15,7 @@ RUN cd testweb && go build -o app .
 WORKDIR /app
 FROM alpine:latest as final
 COPY --from=builder /docker/testweb/app /app/
-COPY --from=builder /docker/testweb/config/* /app/config/
+COPY --from=builder /docker/testweb/config /app/
 EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app/app"]
