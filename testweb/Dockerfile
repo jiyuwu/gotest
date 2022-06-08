@@ -12,7 +12,7 @@ ENV GO111MODULE=on \
 # 指定编译完成后的文件名，可以不设置使用默认的，最后一步要执行该文件名
 RUN cd testweb && go build -o app .
 FROM alpine:latest
-COPY --from=0 /docker/testweb .
+COPY --from=0 /docker/testweb/app /docker/testweb/config ./
 EXPOSE 9962
 # 这里跟编译完的文件名一致
 ENTRYPOINT  ["./app"]
