@@ -18,6 +18,7 @@ type AccountHandler struct {
 func (ah *AccountHandler) Init(server *gin.Engine) {
 	accGroup := server.Group("/account")
 	accGroup.POST("/login", ah.login)
+	accGroup.POST("/register", ah.register)
 }
 
 func (ah *AccountHandler) login(c *gin.Context) {
@@ -38,6 +39,43 @@ func (ah *AccountHandler) login(c *gin.Context) {
 	if err != nil {
 		result.Code = 2
 		result.Msg = "login failure"
+		c.JSON(http.StatusOK, result)
+		return
+	}
+	// 存储数据
+	err = cache.SetUserTokenInfo(vo.GetUserKey(req.AppId, strconv.FormatInt(t.Id, 10)), t.Token)
+	if err != nil {
+		result.Code = 3
+		result.Msg = "save token failure"
+		c.JSON(http.StatusOK, result)
+		return
+	}
+
+	result.Token = t.Token
+	result.Id = t.Id
+	result.Code = 1
+	result.Msg = "success"
+	c.JSON(http.StatusOK, result)
+}
+
+func (ah *AccountHandler) register(c *gin.Context) { //注册即登录
+	// 第一步，验证参数
+	req := new(vo.RegisterReq)
+	result := new(vo.RegisterResponse)
+	err := c.ShouldBindJSON(req)
+	if err != nil {
+		result.Code = 0
+		result.Msg = "register req error"
+		c.JSON(http.StatusOK, result)
+		log.Info("register req:%+v err:%s", req, err)
+		return
+	}
+	// 第二步登录验证
+	var accDao dao.AccountDAO
+	t, err := accDao.CreateAccount(req.UserName, common.MD5(req.Password))
+	if err != nil {
+		result.Code = 2
+		result.Msg = "register failure"
 		c.JSON(http.StatusOK, result)
 		return
 	}

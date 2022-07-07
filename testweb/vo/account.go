@@ -18,6 +18,18 @@ type LoginResponse struct {
 	Id    int64  `json:"userId,omitempty"`
 }
 
+type RegisterReq struct {
+	AppId    uint32 `json:"appId" form:"appId"` // appId
+	UserName string `json:"userName" form:"userName" binding:"required,gt=0"`
+	Password string `json:"password" form:"password" `
+}
+
+type RegisterResponse struct {
+	ModelPrefix
+	Token string `json:"token,omitempty"`
+	Id    int64  `json:"userId,omitempty"`
+}
+
 // 获取用户key
 func GetUserKey(appId uint32, userId string) (key string) {
 	key = fmt.Sprintf("%d_%s", appId, userId)

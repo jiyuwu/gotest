@@ -1,9 +1,11 @@
 package dao
 
 import (
+	"errors"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jiyuwu/gotest/testweb/common"
 	"github.com/jiyuwu/gotest/testweb/entity"
 	"gorm.io/gorm"
 )
@@ -29,4 +31,27 @@ func (dao AccountDAO) GetAccount(username, password string) (*entity.AccountEnti
 	}
 
 	return nil, e
+}
+
+// CreateAccount 创建账号
+func (dao AccountDAO) CreateAccount(username, password string) (*entity.AccountEntity, error) {
+	var acc entity.AccountEntity
+
+	e := databaseConn.Table(acc.TableName()).Where("UserName = ? and Password = ?", username, password).First(&acc).Error
+	if e == gorm.ErrRecordNotFound {
+		acc.UserName = username
+		acc.Password = password
+		acc.Token = uuid.New().String()
+		acc.LoginTime = time.Now().Format("2006-01-02 15:04:05")
+		acc.DeviceType = 1
+		acc.State = 2
+		acc.Ip = common.GetServerIp()
+		e = databaseConn.Table(acc.TableName()).Create(&acc).First(&acc).Error
+		if e != nil {
+			return nil, e
+		} else {
+			return &acc, nil
+		}
+	}
+	return nil, errors.New("register err!")
 }
