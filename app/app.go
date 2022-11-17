@@ -3,5 +3,5 @@ package app
 import "fmt"
 
 func Start() {
-	fmt.Println("aaaaaaaa")
+	fmt.Println("开启")
 }
